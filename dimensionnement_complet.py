@@ -32,9 +32,13 @@ for secteur in coeffs_secteurs.keys():
         2027: prediction("2027-01-01")
     }
 
+pkl.dump(previsions, open("previsions.p","wb"))
+
 # print(previsions)
 
 rho = 1  # choix arbitraire de charge max de la cellule
+
+pkl.dump(rho, open("rho.p", "wb"))
 
 dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
 annees = [2023, 2024, 2025, 2026, 2027]
@@ -258,6 +262,10 @@ for site in combis_sites.keys():
 combis_a_installer = {}
 for secteur in combis_choisies.keys():
     combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
+
+for annee in [2023,2024,2025,2026,2027]:
+    for secteur in bandes_dispos:
+        présentes = bandes_dispos[secteur]
 
 # print(combis_choisies)
 # print(combis_sites)
