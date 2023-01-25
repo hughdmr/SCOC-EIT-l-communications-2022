@@ -261,8 +261,11 @@ for site in combis_sites.keys():
     combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
 
 combis_a_installer = {}
-for secteur in combis_choisies.keys():
-    combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
+for secteur in coeffs_secteurs.keys():
+    if secteur[0:6] in combis_sites:
+        combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
+
+pkl.dump(combis_a_installer,open("combis_a_installer.p","wb"))
 
 for annee in [2023,2024,2025,2026,2027]:
     for secteur in bandes_dispos:
