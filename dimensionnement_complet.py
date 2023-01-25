@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 coeffs_secteurs = pkl.load(open("coeffs.p", "rb"))
 capacites_secteurs = pkl.load(open("capacites.p", "rb"))
+# réportorie les fréquences dispo sur les différents secteurs
 etats_secteurs = pkl.load(open("etats.p", "rb"))
 
 
@@ -11,7 +12,7 @@ x_debut = "2017-06-19"
 
 # Prévisions de 2024 à 2027
 
-previsions = {}
+previsions = {}  # dictionnaire <année>:<prediction de l’année>
 
 for secteur in coeffs_secteurs.keys():
     a = coeffs_secteurs[secteur][0][0]
@@ -33,9 +34,9 @@ for secteur in coeffs_secteurs.keys():
 
 # print(previsions)
 
-rho = 0.95  # choix arbitraire de charge de la cellule
+rho = 0.8  # choix arbitraire de charge max de la cellule
 
-dic_rho = {}
+dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
 annees = [2023, 2024, 2025, 2026, 2027]
 
 for secteur in previsions.keys():
@@ -44,6 +45,7 @@ for secteur in previsions.keys():
         dic_rho[secteur][annee] = previsions[secteur][annee] / \
             (capacites_secteurs[secteur]/10**6)
 
+# liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
 sup = []
 for secteur in dic_rho.keys():
     if dic_rho[secteur][2023] >= rho:
@@ -56,7 +58,8 @@ pkl.dump(dic_rho, open("dic_rho.p", "wb"))
 
 # identification des ajouts
 
-ajouts = {}
+ajouts = {}  # dictionnair contenant les secteurs surchargés
+# dictionnaire <secteur de charge sup à rho>:(dictionnaire {"annee","rho 2027","besoin de debit"})
 
 # Identification des secteurs devant évoluer, en quelle année et à quel point
 
@@ -67,7 +70,7 @@ for secteur in dic_rho.keys():
                 ajouts[secteur] = {
                     "annee": annee,
                     "rho 2027": dic_rho[secteur][2027],
-                    "besoin de debit": previsions[secteur][2027]/0.7 - capacites_secteurs[secteur]/10**6
+                    "besoin de debit": previsions[secteur][2027]/rho - capacites_secteurs[secteur]/10**6
                 }
 
 # print(ajouts)
@@ -102,11 +105,13 @@ bandes_dispos = {}
 for secteur in ajouts.keys():
     bandes_dispos[secteur] = []
     for ajout in evolutions:
+        # la fréquence est disponible sur ce secteur (en 4G)
         if etats_secteurs[secteur][ajout]:
             bandes_dispos[secteur].append(ajout+" update")
-        else:
+        else:  # la fréquence n’est pas dispo sur ce secteur
             bandes_dispos[secteur].append(ajout+" 4G")
             bandes_dispos[secteur].append(ajout+" 5G")
+    # cette fréquence est uniquement en 5G
     if not etats_secteurs[secteur]["3500 MHz"]:
         bandes_dispos[secteur].append("3500 MHz")
 
@@ -118,7 +123,7 @@ for secteur in ajouts.keys():
 def all_combis(candidates):
     combis = []
     n = len(candidates)
-    for i in range(2**n):
+    for i in range(2**n):  # on parcourt toutes les combinaisons d’ajouts de fréquence
         combi = []
         for j in range(n):
             if i & 2**j != 0:
@@ -208,42 +213,45 @@ for secteur in bandes_dispos.keys():
 
 # Egaliser les configs sur chaque secteur d'un site
 
-combis_sites = {}
+combis_sites = {}  # donne les fréquences à ajouter sur chaque site
 
 for secteur in combis_choisies.keys():
-    if not secteur[0:6] in combis_sites:
-        combis_sites[secteur[0:6]] = {}
+    site = secteur[0:6]
+    if not site in combis_sites:
+        combis_sites[site] = {}
     if combis_choisies[secteur]["choix"] == "Aucune combinaison ne convient":
-        if not "limitant" in combis_sites[secteur[0:6]]:
-            combis_sites[secteur[0:6]]["limitant"] = [secteur]
+        if not "limitant" in combis_sites[site]:
+            combis_sites[site]["limitant"] = [secteur]
         else:
-            combis_sites[secteur[0:6]]["limitant"].append(secteur)
+            combis_sites[site]["limitant"].append(secteur)
 
-    elif not "config" in combis_sites[secteur[0:6]]:
-        combis_sites[secteur[0:6]
+    elif not "config" in combis_sites[site]:
+        combis_sites[site
                      ]["config"] = combis_choisies[secteur]["choix"]
     else:
         length = 0
-        for freq in combis_sites[secteur[0:6]]["config"]:
+        for freq in combis_sites[site]["config"]:
             length += largeurs[freq]
         if combis_choisies[secteur]["bande ajoutee"] >= length:
-            combis_sites[secteur[0:6]
+            combis_sites[site
                          ]["config"] = combis_choisies[secteur]["choix"]
 
 # print(combis_sites)
 
+# les sites avec juste le champ "limitant" rempli sont les sites qui seront saturés quelle que soit la config
+
 for site in combis_sites.keys():
     if not "config" in combis_sites[site]:
-        (choix, largeur)=(None,0)
+        (choix, largeur) = (None, 0)
         for lim in combis_sites[site]["limitant"]:
             combinaison = bandes_dispos[lim]
             length = 0
             for freq in combinaison:
                 length += largeurs[freq]/10**6
-            if length>largeur:
-                largeur=length
-                choix=combinaison
-    combis_sites[site]["config"]=choix
+            if length > largeur:
+                largeur = length
+                choix = combinaison
+    combis_sites[site]["config"] = choix
 
     combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
 
@@ -257,8 +265,8 @@ for secteur in combis_choisies.keys():
 
 # Estimation des investissements à réaliser chaque année
 
-total_cost = {}
-besoin_de_site = []
+prix_par_annee = {}
+besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
 
 for site in combis_sites.keys():
     if "config" in combis_sites[site]:
@@ -270,29 +278,32 @@ for site in combis_sites.keys():
         if site+"C" in ajouts:
             secteurs.append(site+"C")
         annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
-        if str(annee) not in total_cost:
-            total_cost[str(annee)] = combis_sites[site]["prix"]
+        if str(annee) not in prix_par_annee:
+            prix_par_annee[str(annee)] = combis_sites[site]["prix"]
         else:
-            total_cost[str(annee)] += combis_sites[site]["prix"]
+            prix_par_annee[str(annee)] += combis_sites[site]["prix"]
     if "limitant" in combis_sites[site]:
-        besoin_de_site+=combis_sites[site]["limitant"]
+        besoin_de_site += combis_sites[site]["limitant"]
 
-# print(total_cost)
+prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
+
+print(prix_total)
+print(combis_sites)
 # print(besoin_de_site)
 
 # Tracé année par année
 
 plt.figure()
-names = list(total_cost.keys())
+names = list(prix_par_annee.keys())
 names.sort()
-values = [total_cost[annee] for annee in names]
+values = [prix_par_annee[annee] for annee in names]
 plt.bar(names, values)
 plt.show()
 
 # On va visualiser l'évolution de la répartition des investissements en faisaint varier rho
 
 # Export des données
-# pkl.dump(total_cost, open("rho_0_95.p", "wb"))
+# pkl.dump(prix_par_annee, open("rho_0_95.p", "wb"))
 
 # Rechargement des données de tous les rho
 
