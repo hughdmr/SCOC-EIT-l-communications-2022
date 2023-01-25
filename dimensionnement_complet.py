@@ -230,84 +230,103 @@ for secteur in combis_choisies.keys():
             combis_sites[secteur[0:6]
                          ]["config"] = combis_choisies[secteur]["choix"]
 
-print(combis_sites)
+# print(combis_sites)
 
 for site in combis_sites.keys():
-    print(site)
+    if not "config" in combis_sites[site]:
+        (choix, largeur)=(None,0)
+        for lim in combis_sites[site]["limitant"]:
+            combinaison = bandes_dispos[lim]
+            length = 0
+            for freq in combinaison:
+                length += largeurs[freq]/10**6
+            if length>largeur:
+                largeur=length
+                choix=combinaison
+    combis_sites[site]["config"]=choix
+
     combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
 
 combis_a_installer = {}
 for secteur in combis_choisies.keys():
-    combis_a_installer[secteur] = combis_choisies[secteur[0:6]]
+    combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
 
-print(combis_choisies)
-print(combis_sites)
-print(combis_a_installer)
+# print(combis_choisies)
+# print(combis_sites)
+# print(combis_a_installer)
 
 # Estimation des investissements à réaliser chaque année
 
 total_cost = {}
-aucune_combi = []
+besoin_de_site = []
 
-for secteur in combis_choisies.keys():
-    if "prix" in combis_choisies[secteur]:
-        annee = ajouts[secteur]["annee"]
+for site in combis_sites.keys():
+    if "config" in combis_sites[site]:
+        secteurs = []
+        if site+"A" in ajouts:
+            secteurs.append(site+"A")
+        if site+"B" in ajouts:
+            secteurs.append(site+"B")
+        if site+"C" in ajouts:
+            secteurs.append(site+"C")
+        annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
         if str(annee) not in total_cost:
-            total_cost[str(annee)] = combis_choisies[secteur]["prix"]
+            total_cost[str(annee)] = combis_sites[site]["prix"]
         else:
-            total_cost[str(annee)] += combis_choisies[secteur]["prix"]
-    if "prix" not in combis_choisies[secteur]:
-        aucune_combi.append(secteur)
+            total_cost[str(annee)] += combis_sites[site]["prix"]
+    if "limitant" in combis_sites[site]:
+        besoin_de_site+=combis_sites[site]["limitant"]
 
-print(total_cost)
-print(aucune_combi)
+# print(total_cost)
+# print(besoin_de_site)
 
 # Tracé année par année
 
-# plt.figure()
-# names = ["2023", "2024", "2025", "2026", "2027"]
-# values = [total_cost[annee] for annee in names]
-# plt.bar(names, values)
-# plt.show()
+plt.figure()
+names = list(total_cost.keys())
+names.sort()
+values = [total_cost[annee] for annee in names]
+plt.bar(names, values)
+plt.show()
 
 # On va visualiser l'évolution de la répartition des investissements en faisaint varier rho
 
 # Export des données
-pkl.dump(total_cost, open("rho_0_95.p", "wb"))
+# pkl.dump(total_cost, open("rho_0_95.p", "wb"))
 
 # Rechargement des données de tous les rho
 
-rho_0_7 = pkl.load(open("rho_0_7.p", "rb"))
-rho_0_8 = pkl.load(open("rho_0_8.p", "rb"))
-rho_0_9 = pkl.load(open("rho_0_9.p", "rb"))
-rho_0_95 = pkl.load(open("rho_0_95.p", "rb"))
-names = ["2023", "2024", "2025", "2026", "2027"]
+# rho_0_7 = pkl.load(open("rho_0_7.p", "rb"))
+# rho_0_8 = pkl.load(open("rho_0_8.p", "rb"))
+# rho_0_9 = pkl.load(open("rho_0_9.p", "rb"))
+# rho_0_95 = pkl.load(open("rho_0_95.p", "rb"))
+# names = ["2023", "2024", "2025", "2026", "2027"]
 
-figure = plt.figure(figsize=(10, 6))
+# figure = plt.figure(figsize=(10, 6))
 
-plt.gcf().subplots_adjust(wspace=0.4, hspace=0.4)
+# plt.gcf().subplots_adjust(wspace=0.4, hspace=0.4)
 
-axes = figure.add_subplot(2, 2, 1)
-values_1 = [rho_0_7[annee] for annee in names]
-axes.bar(names, values_1)
-axes.set_title("Rho = 0,7")
+# axes = figure.add_subplot(2, 2, 1)
+# values_1 = [rho_0_7[annee] for annee in names]
+# axes.bar(names, values_1)
+# axes.set_title("Rho = 0,7")
 
-axes = figure.add_subplot(2, 2, 2)
-values_2 = [rho_0_8[annee] for annee in names]
-axes.bar(names, values_2)
-axes.set_title("Rho = 0,8")
+# axes = figure.add_subplot(2, 2, 2)
+# values_2 = [rho_0_8[annee] for annee in names]
+# axes.bar(names, values_2)
+# axes.set_title("Rho = 0,8")
 
-axes = figure.add_subplot(2, 2, 3)
-values_3 = [rho_0_9[annee] for annee in names]
-axes.bar(names, values_3)
-axes.set_title("Rho = 0,9")
+# axes = figure.add_subplot(2, 2, 3)
+# values_3 = [rho_0_9[annee] for annee in names]
+# axes.bar(names, values_3)
+# axes.set_title("Rho = 0,9")
 
-axes = figure.add_subplot(2, 2, 4)
-values_4 = [rho_0_95[annee] for annee in names]
-axes.bar(names, values_4)
-axes.set_title("Rho = 0,95")
+# axes = figure.add_subplot(2, 2, 4)
+# values_4 = [rho_0_95[annee] for annee in names]
+# axes.bar(names, values_4)
+# axes.set_title("Rho = 0,95")
 
-plt.show()
+# plt.show()
 
 # Exporter sous format CSV les configurations chaque année et les travaux à effectuer chaque année
 
