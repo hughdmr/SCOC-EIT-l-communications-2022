@@ -43,7 +43,7 @@ for secteur in coeffs_secteurs.keys():
 
 # print(previsions)
 
-rho = 0.8  # choix arbitraire de charge max de la cellule
+rho = 1  # choix arbitraire de charge max de la cellule
 
 dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
 annees = [2023, 2024, 2025, 2026, 2027, 2028]
@@ -300,18 +300,18 @@ for site in combis_sites.keys():
 
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
-print(prix_total)
-print(combis_sites)
+# print(prix_total)
+# print(combis_sites)
 # print(besoin_de_site)
 
-# Tracé année par année
+# # Tracé année par année
 
-plt.figure()
-names = list(prix_par_annee.keys())
-names.sort()
-values = [prix_par_annee[annee] for annee in names]
-plt.bar(names, values)
-plt.show()
+# plt.figure()
+# names = list(prix_par_annee.keys())
+# names.sort()
+# values = [prix_par_annee[annee] for annee in names]
+# plt.bar(names, values)
+# plt.show()
 
 # On va visualiser l'évolution de la répartition des investissements en faisaint varier rho
 
@@ -352,6 +352,15 @@ plt.show()
 
 # plt.show()
 
-# Exporter sous format CSV les configurations chaque année et les travaux à effectuer chaque année
+#### Tracé d'un histogramme des modifications ####
 
-# Prendre en compte qu'un site a la même config pour tous les secteurs
+plt.figure()
+names = list(largeurs.keys())
+# print(names)
+values = [0]*len(names)
+for site in combis_sites:
+    for evol in combis_sites[site]["config"]:
+        values[names.index(evol)]+=1
+plt.bar(names, values)
+plt.show()
+
