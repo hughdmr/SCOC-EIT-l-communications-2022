@@ -28,3 +28,4 @@ with open("exports/export_{}.csv".format(annee), 'w', newline='') as csvfile:
 
         writer.writerow((secteur, secteur[0:6],previsions[secteur][annee], sature, etat[0], etat[1], etat[2],etat[3],etat[4],etat[5]))
 
+
