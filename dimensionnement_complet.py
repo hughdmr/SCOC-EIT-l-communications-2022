@@ -7,7 +7,6 @@ capacites_secteurs = pkl.load(open("capacites.p", "rb"))
 # réportorie les fréquences dispo sur les différents secteurs
 etats_secteurs = pkl.load(open("etats.p", "rb"))
 
-
 x_debut = "2017-06-19"
 
 # Prévisions de 2024 à 2027
@@ -32,9 +31,9 @@ for secteur in coeffs_secteurs.keys():
         2027: prediction("2027-01-01")
     }
 
-pkl.dump(previsions, open("previsions.p","wb"))
+pkl.dump(previsions, open("previsions.p", "wb"))
 
-# print(previsions)
+print(previsions)
 
 rho = 1  # choix arbitraire de charge max de la cellule
 
@@ -77,7 +76,7 @@ for secteur in dic_rho.keys():
                     "besoin de debit": previsions[secteur][2027]/rho - capacites_secteurs[secteur]/10**6
                 }
 
-pkl.dump(ajouts,open("ajouts.p","wb"))
+pkl.dump(ajouts, open("ajouts.p", "wb"))
 # print(ajouts)
 
 # Recherche des évolutions possibles
@@ -265,9 +264,9 @@ for secteur in coeffs_secteurs.keys():
     if secteur[0:6] in combis_sites:
         combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
 
-pkl.dump(combis_a_installer,open("combis_a_installer.p","wb"))
+pkl.dump(combis_a_installer, open("combis_a_installer.p", "wb"))
 
-for annee in [2023,2024,2025,2026,2027]:
+for annee in [2023, 2024, 2025, 2026, 2027]:
     for secteur in bandes_dispos:
         présentes = bandes_dispos[secteur]
 
@@ -280,7 +279,7 @@ for annee in [2023,2024,2025,2026,2027]:
 prix_par_annee = {}
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
 
-annee_update_site ={}
+annee_update_site = {}
 
 for site in combis_sites.keys():
     if "config" in combis_sites[site]:
@@ -292,7 +291,7 @@ for site in combis_sites.keys():
         if site+"C" in ajouts:
             secteurs.append(site+"C")
         annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
-        annee_update_site[site]=annee
+        annee_update_site[site] = annee
         if str(annee) not in prix_par_annee:
             prix_par_annee[str(annee)] = combis_sites[site]["prix"]
         else:
@@ -300,7 +299,7 @@ for site in combis_sites.keys():
     if "limitant" in combis_sites[site]:
         besoin_de_site += combis_sites[site]["limitant"]
 
-pkl.dump(annee_update_site,open("annees_update.p","wb"))
+pkl.dump(annee_update_site, open("annees_update.p", "wb"))
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
 # print(prix_total)
@@ -363,7 +362,6 @@ names = list(largeurs.keys())
 values = [0]*len(names)
 for site in combis_sites:
     for evol in combis_sites[site]["config"]:
-        values[names.index(evol)]+=1
+        values[names.index(evol)] += 1
 plt.bar(names, values)
 plt.show()
-
