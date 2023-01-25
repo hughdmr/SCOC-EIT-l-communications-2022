@@ -77,6 +77,7 @@ for secteur in dic_rho.keys():
                     "besoin de debit": previsions[secteur][2027]/rho - capacites_secteurs[secteur]/10**6
                 }
 
+pkl.dump(ajouts,open("ajouts.p","wb"))
 # print(ajouts)
 
 # Recherche des évolutions possibles
@@ -276,6 +277,8 @@ for annee in [2023,2024,2025,2026,2027]:
 prix_par_annee = {}
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
 
+annee_update_site ={}
+
 for site in combis_sites.keys():
     if "config" in combis_sites[site]:
         secteurs = []
@@ -286,6 +289,7 @@ for site in combis_sites.keys():
         if site+"C" in ajouts:
             secteurs.append(site+"C")
         annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
+        annee_update_site[site]=annee
         if str(annee) not in prix_par_annee:
             prix_par_annee[str(annee)] = combis_sites[site]["prix"]
         else:
@@ -293,6 +297,7 @@ for site in combis_sites.keys():
     if "limitant" in combis_sites[site]:
         besoin_de_site += combis_sites[site]["limitant"]
 
+pkl.dump(annee_update_site,open("annees_update.p","wb"))
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
 # print(prix_total)
