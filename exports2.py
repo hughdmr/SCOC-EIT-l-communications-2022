@@ -24,6 +24,30 @@ for annee in annees:
         if annees_update[site] == annee:
             annee_et_ajout[annee].append([site, combis_a_installer[site+"A"]])
 
+largeurs = {
+    "700 MHz 4G": 5*10**6,
+    "700 MHz update": 0.2*5*10**6,
+    "700 MHz 5G": 1.2*5*10**6,
+    "800 MHz 4G": 10*10**6,
+    "800 MHz update": 0.2*10*10**6,
+    "800 MHz 5G": 1.2*5*10**6,
+    "1800 MHz 4G": 20*10**6,
+    "1800 MHz update": 0.2*20*10**6,
+    "1800 MHz 5G": 1.2*5*10**6,
+    "2100 MHz 4G": 15*10**6,
+    "2100 MHz update": 0.2*15*10**6,
+    "2100 MHz 5G": 1.2*15*10**6,
+    "2600 MHz 4G": 15*10**6,
+    "2600 MHz update": 0.2*15*10**6,
+    "2600 MHz 5G": 1.2*15*10**6,
+    "3500 MHz": 70*10**6}
+
+ajout_4G = ['700 MHz 4G', "800 MHz 4G",
+            "1800 MHz 4G", "2100 MHz 4G", "2600 MHz 4G"]
+ajout_5G = list(largeurs.keys())
+for i in range(len(ajout_4G)):
+    ajout_5G.remove(ajout_4G[i])
+
 for annee in annees:
     if annee == 2023:
         df2 = pd.read_csv("exports/initialement.csv")
@@ -36,7 +60,7 @@ for annee in annees:
             sect3 = str((L[k][0]) + "C")
             if sect1 in list(df2['secteur']):
                 for freq in L[k][1]:
-                    if freq == "3500 MHz":
+                    if freq in ajout_5G:
                         df2[freq][ind] = "5G"
                     else:
                         df2[freq][ind] = "4G"
@@ -48,7 +72,7 @@ for annee in annees:
                 df2['sature'][ind] = sature
             if sect2 in list(df2['secteur']):
                 for freq in L[k][1]:
-                    if freq == "3500 MHz":
+                    if freq in ajout_5G:
                         df2[freq][ind+1] = "5G"
                     else:
                         df2[freq][ind+1] = "4G"
@@ -60,7 +84,7 @@ for annee in annees:
                 df2['sature'][ind+1] = sature
             if sect3 in list(df2['secteur']):
                 for freq in L[k][1]:
-                    if freq == "3500 MHz":
+                    if freq in ajout_5G:
                         df2[freq][ind+2] = "5G"
                     else:
                         df2[freq][ind+2] = "4G"
@@ -95,13 +119,13 @@ for annee in annees:
             sect3 = str((L[k][0]) + "C")
             if sect1 in list(df2['secteur']):
                 for freq in L[k][1]:
-                    if freq == "3500 MHz":
+                    if freq in ajout_5G:
                         df3[freq][ind] = "5G"
                     else:
                         df3[freq][ind] = "4G"
             if sect2 in list(df2['secteur']):
                 for freq in L[k][1]:
-                    if freq == "3500 MHz":
+                    if freq in ajout_5G:
                         df3[freq][ind+1] = "5G"
                     else:
                         df3[freq][ind+1] = "4G"
