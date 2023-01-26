@@ -35,7 +35,7 @@ pkl.dump(previsions, open("previsions.p", "wb"))
 
 print(previsions)
 
-rho = 1  # choix arbitraire de charge max de la cellule
+rho = 0.8  # choix arbitraire de charge max de la cellule
 
 pkl.dump(rho, open("rho.p", "wb"))
 
@@ -61,7 +61,7 @@ pkl.dump(dic_rho, open("dic_rho.p", "wb"))
 
 # identification des ajouts
 
-ajouts = {}  # dictionnair contenant les secteurs surchargés
+ajouts = {}  # dictionnaire contenant les secteurs surchargés
 # dictionnaire <secteur de charge sup à rho>:(dictionnaire {"annee","rho 2027","besoin de debit"})
 
 # Identification des secteurs devant évoluer, en quelle année et à quel point
@@ -119,7 +119,7 @@ for secteur in ajouts.keys():
     if not etats_secteurs[secteur]["3500 MHz"]:
         bandes_dispos[secteur].append("3500 MHz")
 
-# print(bandes_dispos)
+# print(bandes_dispos["T70747C"]) # on obtient le résultat attendu
 
 # Enumérer les combinaisons, sans discrimination sur le débit apporté
 
@@ -147,6 +147,7 @@ def all_combis(candidates):
             combis_correctes.append(combi)
     return combis_correctes
 
+# print(all_combis(bandes_dispos["T70747C"])) # renvoie le résultat attendu
 # print(all_combis(list(largeurs.keys())))
 
 # Pour une combinaison, vérifier qu'elle fonctionne pour augmenter le débit
@@ -213,6 +214,7 @@ for secteur in bandes_dispos.keys():
             length += largeurs[freq]/10**6
         combis_choisies[secteur]["bande ajoutee"] = length
 
+# print(combis_choisies["T70747C"]) # renvoie le résultat attendu
 # print(combis_choisies)
 
 # Egaliser les configs sur chaque secteur d'un site
@@ -241,6 +243,7 @@ for secteur in combis_choisies.keys():
                          ]["config"] = combis_choisies[secteur]["choix"]
 
 # print(combis_sites)
+# print(combis_sites["T70747"]) # renvoie le résultat attendu
 
 # les sites avec juste le champ "limitant" rempli sont les sites qui seront saturés quelle que soit la config
 
@@ -255,9 +258,11 @@ for site in combis_sites.keys():
             if length > largeur:
                 largeur = length
                 choix = combinaison
-    combis_sites[site]["config"] = choix
+        combis_sites[site]["config"] = choix
 
     combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
+
+# print(combis_sites["T70747"])
 
 combis_a_installer = {}
 for secteur in coeffs_secteurs.keys():
