@@ -13,7 +13,7 @@ rho = pkl.load(open("rho.p", "rb"))
 
 # print(combis_a_installer)
 # print(annees_update)
-print(dic_rho)
+# print(dic_rho)
 
 annee_et_ajout = {}
 
@@ -74,7 +74,7 @@ for annee in annees:
     if annee != 2023:
         shutil.copyfile("exports/export_"+str((annee-1))+".csv",
                         "exports/export_"+str(annee)+".csv")
-        df3 = pd.read_csv("exports/export_"+str(annee)+".csv")
+        df3 = pd.read_csv("exports/export_"+str(annee)+".csv", index_col=0)
         secteurs = list(dic_rho.keys())
         b = list(df3['secteur'])
         for secteur in secteurs:
