@@ -15,6 +15,9 @@ rho = pkl.load(open("rho.p", "rb"))
 # print(annees_update)
 # print(dic_rho)
 
+
+# Partie de François
+
 annee_et_ajout = {}
 
 for annee in annees:
@@ -23,6 +26,8 @@ for annee in annees:
     for site in sites:
         if annees_update[site] == annee:
             annee_et_ajout[annee].append([site, combis_a_installer[site+"A"]])
+
+# print(annee_et_ajout[2027])
 
 for annee in annees:
     if annee == 2023:
@@ -112,3 +117,54 @@ for annee in annees:
                     else:
                         df3[freq][ind+2] = "4G"
         df3.to_csv('exports/export_'+str(annee)+'.csv')
+
+
+# Recalcul des rho par annee en prenant en compte les ajouts
+
+largeurs = {
+    "700 MHz" : 5*10**6,
+    "800 MHz" : 10*10**6,
+    "1800 MHz" : 20*10**6,
+    "2100 MHz" : 15*10**6,
+    "2600 MHz" : 15*10**6,
+    "3500 MHz" : 70*10**6
+}
+
+rho_par_annee = {}
+
+for annee in annees:
+
+    data = pd.read_csv("exports/export_{}.csv".format(annee), delimiter=",")
+
+    data_secteurs = data["secteur"]
+
+    etats = {}
+
+    for i in range(len(data_secteurs)):
+        etats[data_secteurs[i]] = {}
+        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"]:
+            if data[freq][i] == "0":
+                etats[data_secteurs[i]][freq] = 0
+            elif data[freq][i] == "4G":
+                etats[data_secteurs[i]][freq] = 1
+            else:
+                etats[data_secteurs[i]][freq] = 1.2
+
+    # print(etats["T70725A"])
+
+    capacites_actuelles = {}
+    for secteur in etats:
+        length = 0
+        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz","3500 MHz"]:
+            length += (largeurs[freq]*etats[secteur][freq])
+        capacites_actuelles[secteur] = 1.43*length
+
+    # print(capacites_actuelles["T70725A"])
+
+    rho_actuels = {}
+    for secteur in previsions.keys():
+        rho_actuels[secteur] = previsions[secteur][annee] / \
+                (capacites_actuelles[secteur]/10**6)
+
+    rho_par_annee[annee]=rho_actuels
+
