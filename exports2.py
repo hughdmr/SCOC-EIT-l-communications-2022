@@ -28,8 +28,6 @@ for annee in annees:
         if annees_update[site] == annee:
             annee_et_ajout[annee].append([site, combis_a_installer[site+"A"]])
 
-print(annee_et_ajout)
-
 with open("csv_changements/changes.csv", 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     df4 = pd.read_csv("exports/initialement.csv")
@@ -200,24 +198,20 @@ for annee in annees:
 # Recalcul des rho par annee en prenant en compte les ajouts
 
 largeurs = {
-    "700 MHz" : 5*10**6,
-    "800 MHz" : 10*10**6,
-    "1800 MHz" : 20*10**6,
-    "2100 MHz" : 15*10**6,
-    "2600 MHz" : 15*10**6,
-    "3500 MHz" : 70*10**6
+    "700 MHz": 5*10**6,
+    "800 MHz": 10*10**6,
+    "1800 MHz": 20*10**6,
+    "2100 MHz": 15*10**6,
+    "2600 MHz": 15*10**6,
+    "3500 MHz": 70*10**6
 }
 
 rho_par_annee = {}
 
 for annee in annees:
-
     data = pd.read_csv("exports/export_{}.csv".format(annee), delimiter=",")
-
     data_secteurs = data["secteur"]
-
     etats = {}
-
     for i in range(len(data_secteurs)):
         etats[data_secteurs[i]] = {}
         for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"]:
@@ -233,7 +227,7 @@ for annee in annees:
     capacites_actuelles = {}
     for secteur in etats:
         length = 0
-        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz","3500 MHz"]:
+        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"]:
             length += (largeurs[freq]*etats[secteur][freq])
         capacites_actuelles[secteur] = 1.43*length
 
@@ -242,7 +236,18 @@ for annee in annees:
     rho_actuels = {}
     for secteur in previsions.keys():
         rho_actuels[secteur] = previsions[secteur][annee] / \
-                (capacites_actuelles[secteur]/10**6)
+            (capacites_actuelles[secteur]/10**6)
 
-    rho_par_annee[annee]=rho_actuels
+    rho_par_annee[annee] = rho_actuels
 
+for annee in annees:
+    df5 = pd.read_csv("exports/export_" + str(annee)+".csv", index_col=0)
+    a = list(df5["secteur"])
+    rhos = rho_par_annee[annee]
+    secteurs = list(rhos.keys())
+    values = [0]*(len(rhos.keys()))
+    for j in range(len(values)):
+        indexs = a.index(secteurs[j])
+        values[indexs] = rhos[secteurs[j]]
+    df5.insert(7, "rho_avec_chg", values)
+    df5.to_csv("exports/export_" + str(annee)+".csv",)
