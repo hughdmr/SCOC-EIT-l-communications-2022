@@ -104,7 +104,7 @@ ajout_4G = ['700 MHz 4G', "800 MHz 4G",
 ajout_5G = list(largeurs.keys())
 for i in range(len(ajout_4G)):
     ajout_5G.remove(ajout_4G[i])
-
+print(ajout_5G)
 # print(annee_et_ajout[2027])
 
 for annee in annees:
@@ -119,10 +119,11 @@ for annee in annees:
             sect3 = str((L[k][0]) + "C")
             if sect1 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z = freq.index("z")
                     if freq in ajout_5G:
-                        df2[freq][ind] = "5G"
+                        df2[freq[0:pos_z+1]][ind] = "5G"
                     else:
-                        df2[freq][ind] = "4G"
+                        df2[freq[0:pos_z+1]][ind] = "4G"
                 df2['debit_prevu'][ind] = previsions[sect1][annee]
                 if dic_rho[sect1][annee] > rho:
                     sature = 1
@@ -131,10 +132,11 @@ for annee in annees:
                 df2['sature'][ind] = sature
             if sect2 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z=freq.index("z")
                     if freq in ajout_5G:
-                        df2[freq][ind+1] = "5G"
+                        df2[freq[0:pos_z+1]][ind+1] = "5G"
                     else:
-                        df2[freq][ind+1] = "4G"
+                        df2[freq[0:pos_z+1]][ind+1] = "4G"
                 df2['debit_prevu'][ind+1] = previsions[sect2][annee]
                 if dic_rho[sect2][annee] > rho:
                     sature = 1
@@ -143,10 +145,11 @@ for annee in annees:
                 df2['sature'][ind+1] = sature
             if sect3 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z=freq.index("z")
                     if freq in ajout_5G:
-                        df2[freq][ind+2] = "5G"
+                        df2[freq[0:pos_z+1]][ind+2] = "5G"
                     else:
-                        df2[freq][ind+2] = "4G"
+                        df2[freq[0:pos_z+1]][ind+2] = "4G"
                 df2['debit_prevu'][ind+3] = previsions[sect3][annee]
                 if dic_rho[sect3][annee] > rho:
                     sature = 1
@@ -178,34 +181,37 @@ for annee in annees:
             sect3 = str((L[k][0]) + "C")
             if sect1 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z=freq.index("z")
                     if freq in ajout_5G:
-                        df3[freq][ind] = "5G"
+                        df3[freq[0:pos_z+1]][ind] = "5G"
                     else:
-                        df3[freq][ind] = "4G"
+                        df3[freq[0:pos_z+1]][ind] = "4G"
             if sect2 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z=freq.index("z")
                     if freq in ajout_5G:
-                        df3[freq][ind+1] = "5G"
+                        df3[freq[0:pos_z+1]][ind+1] = "5G"
                     else:
-                        df3[freq][ind+1] = "4G"
+                        df3[freq[0:pos_z+1]][ind+1] = "4G"
             if sect3 in list(df2['secteur']):
                 for freq in L[k][1]:
+                    pos_z=freq.index("z")
                     if freq == "3500 MHz":
-                        df3[freq][ind+2] = "5G"
+                        df3[freq[0:pos_z+1]][ind+2] = "5G"
                     else:
-                        df3[freq][ind+2] = "4G"
+                        df3[freq[0:pos_z+1]][ind+2] = "4G"
         df3.to_csv('exports/export_'+str(annee)+'.csv')
 
 
 # Recalcul des rho par annee en prenant en compte les ajouts
 
 largeurs = {
-    "700 MHz" : 5*10**6,
-    "800 MHz" : 10*10**6,
-    "1800 MHz" : 20*10**6,
-    "2100 MHz" : 15*10**6,
-    "2600 MHz" : 15*10**6,
-    "3500 MHz" : 70*10**6
+    "700 MHz": 5*10**6,
+    "800 MHz": 10*10**6,
+    "1800 MHz": 20*10**6,
+    "2100 MHz": 15*10**6,
+    "2600 MHz": 15*10**6,
+    "3500 MHz": 70*10**6
 }
 
 rho_par_annee = {}
@@ -233,7 +239,7 @@ for annee in annees:
     capacites_actuelles = {}
     for secteur in etats:
         length = 0
-        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz","3500 MHz"]:
+        for freq in ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"]:
             length += (largeurs[freq]*etats[secteur][freq])
         capacites_actuelles[secteur] = 1.43*length
 
@@ -242,7 +248,6 @@ for annee in annees:
     rho_actuels = {}
     for secteur in previsions.keys():
         rho_actuels[secteur] = previsions[secteur][annee] / \
-                (capacites_actuelles[secteur]/10**6)
+            (capacites_actuelles[secteur]/10**6)
 
-    rho_par_annee[annee]=rho_actuels
-
+    rho_par_annee[annee] = rho_actuels

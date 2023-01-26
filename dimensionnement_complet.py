@@ -35,7 +35,7 @@ pkl.dump(previsions, open("previsions.p", "wb"))
 
 print(previsions)
 
-rho = 1  # choix arbitraire de charge max de la cellule
+rho = 0.8  # choix arbitraire de charge max de la cellule
 
 pkl.dump(rho, open("rho.p", "wb"))
 
