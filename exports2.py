@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle as pkl
 import shutil
+import csv
 pd.options.mode.chained_assignment = None  # default='warn'
 
 annees = [2023, 2024, 2025, 2026, 2027]
@@ -23,6 +24,59 @@ for annee in annees:
     for site in sites:
         if annees_update[site] == annee:
             annee_et_ajout[annee].append([site, combis_a_installer[site+"A"]])
+
+print(annee_et_ajout)
+
+with open("csv_changements/changes.csv", 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    df4 = pd.read_csv("exports/initialement.csv")
+    sites = list(df4['site'])
+    # colonnes
+    writer.writerow(('annee', 'site', 'X lambert', 'Y lambert', "700 MHz",
+                    "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"))
+    for annee in list(annee_et_ajout.keys()):
+        for k in range(len(annee_et_ajout[annee])):
+            site = annee_et_ajout[annee][k][0]
+            a = sites.index(site)
+            X = df4['X lambert'][a]
+            Y = df4['Y lambert'][a]
+            ajouts_bande = [0, 0, 0, 0, 0, 0]
+            bandes = annee_et_ajout[annee][k][1]
+            if ("700 MHz 4G" in bandes):
+                ajouts_bande[0] = "4G"
+            if ("700 MHz update" in bandes):
+                ajouts_bande[0] = "p"
+            if ("700 MHz 5G" in bandes):
+                ajouts_bande[0] = "5G"
+            if ("800 MHz 4G" in bandes):
+                ajouts_bande[1] = "4G"
+            if ("800 MHz update" in bandes):
+                ajouts_bande[1] = "p"
+            if ("800 MHz 5G" in bandes):
+                ajouts_bande[1] = "5G"
+            if ("1800 MHz 4G" in bandes):
+                ajouts_bande[2] = "4G"
+            if ("1800 MHz update" in bandes):
+                ajouts_bande[2] = "p"
+            if ("1800 MHz 5G" in bandes):
+                ajouts_bande[2] = "5G"
+            if ("2100 MHz 4G" in bandes):
+                ajouts_bande[3] = "4G"
+            if ("2100 MHz update" in bandes):
+                ajouts_bande[3] = "p"
+            if ("2100 MHz 5G" in bandes):
+                ajouts_bande[3] = "5G"
+            if ("2600 MHz 4G" in bandes):
+                ajouts_bande[4] = "4G"
+            if ("2600 MHz update" in bandes):
+                ajouts_bande[4] = "p"
+            if ("2600 MHz 5G" in bandes):
+                ajouts_bande[4] = "5G"
+            if ("3500 MHz" in bandes):
+                ajouts_bande[5] = "5G"
+            writer.writerow((annee, site, X, Y, ajouts_bande[0], ajouts_bande[1],
+                            ajouts_bande[2], ajouts_bande[3], ajouts_bande[4], ajouts_bande[5]))
+
 
 largeurs = {
     "700 MHz 4G": 5*10**6,
