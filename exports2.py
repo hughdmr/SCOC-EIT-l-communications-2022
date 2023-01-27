@@ -266,3 +266,17 @@ for i in range(len(df6['rho_avec_chg'])):
         sect_tj_sat.append(df6['secteur'][i])
 
 print(sect_tj_sat)
+
+rho_par_annee = pkl.load(open('new_rhos.p','rb'))
+
+for annee in annees:
+    df5 = pd.read_csv("export2/export_" + str(annee)+".csv", index_col=0)
+    a = list(df5["secteur"])
+    rhos = rho_par_annee[annee]
+    secteurs = list(rhos.keys())
+    values = [0]*(len(rhos.keys()))
+    for j in range(len(values)):
+        indexs = a.index(secteurs[j])
+        values[indexs] = rhos[secteurs[j]]
+    df5.insert(7, "rho_avec_chg", values)
+    df5.to_csv("export2/export_" + str(annee)+".csv",)
