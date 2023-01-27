@@ -1,6 +1,7 @@
 import pickle as pkl
 import datetime
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 coeffs_secteurs = pkl.load(open("coeffs.p", "rb"))
 capacites_secteurs = pkl.load(open("capacites.p", "rb"))
@@ -82,18 +83,18 @@ rho_max = 0.8  # choix arbitraire de charge max de la cellule
 
 
 dic_rho2 = {}  # dictionnaire <secteur>:<charge du secteur>
+pkl.dump(dic_rho2, open("dic_rho2.p", "wb"))
 
-# def rho_secteurs(previsions):
-#     for secteur in previsions.keys():
-#         dic_rho2[secteur] = {}
-#         for annee in annees:
-#             dic_rho2[secteur][annee] = previsions[secteur][annee] / \
-#                 (capacites_secteurs[secteur]/10**6)
 
-#     # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
+def rho_secteurs(previsions):
+    for secteur in previsions.keys():
+        dic_rho2[secteur] = {}
+        for annee in annees:
+            dic_rho2[secteur][annee] = previsions[secteur][annee] / \
+                (capacites_secteurs[secteur]/10**6)
 
-# rho_secteurs(previsions)
-# pkl.dump(dic_rho2, open("dic_rho2.p", "wb"))
+    # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
+
 
 # Recherche des évolutions possibles
 frequences = ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz"]
@@ -147,7 +148,6 @@ def config_to_capacite(config):  # renvoie la capacité harmonique associée à 
         if config[freq_option]:
             capacite += largeurs[freq_option]
     return capacite
-
 
 
 # renvoie la capacité harmonique en 4G associée à la config
@@ -267,14 +267,15 @@ def combi_prix(combi):
 
 # fonction qui renvoie la config modifiée par des ajouts de nouvelles fréquences ou bien des màj 4G-->5G
 def ajout_config(config_secteur, combi):
+    config_secteur_bis = deepcopy(config_secteur)
     for freq_option in combi:
         if "update" not in freq_option:
-            config_secteur[freq_option] = True
+            config_secteur_bis[freq_option] = True
         else:
             pos_z = freq_option.index("z")
             freq = freq_option[0:pos_z + 1]
-            config_secteur[f"{freq} 5G"] = True
-            config_secteur[f"{freq} 4G"] = False
+            config_secteur_bis[f"{freq} 5G"] = True
+            config_secteur_bis[f"{freq} 4G"] = False
     return config_secteur
 
 
@@ -319,23 +320,38 @@ for annee in annees:  # à chaque année on regarde les previsions
                 if config_valide(next_config, debit_futur, ratio_4g[annee+1]):
                     combis_valides.append(combi)
 
+            combi_choisie = []
+
             if combis_valides == []:
+                secteur = secteurs_site[0]
                 secteurs_satures_def[annee+1].append(
                     max(secteurs_site, key=lambda c: previsions[annee+1][c]))
-                if invalide_4g(config[annee-1][secteur]):
-                    for freq_option
+                if invalide_4g(config[annee-1][secteurs_site[0]], debit_futur, ratio_4g[annee+1]):
+                    for freq_option in largeurs:
+                        if "4G" in freq_option and not config[annee-1][secteur][freq_option]:
+                            combi_choisie.append(freq_option)
+                else:
+                    for freq in frequences:
+                        if not config[annee-1][secteur][f"{freq} 4G"] and not config[annee-1][secteur][f"{freq} 5G"]:
+                            combi_choisie.append(f"{freq} 5G")
+                if not config[annee-1][secteur]["3500 MHz"]:
+                    combi_choisie.append("3500 MHz")
+
             else:
                 combi_choisie = min(
                     combis_valides, key=lambda c: combi_prix(c))
-                prix_par_annee[annee] = prix_par_annee[annee] + \
-                    combi_prix(combi_choisie)
 
+            prix_par_annee[annee] = prix_par_annee[annee] + \
+                combi_prix(combi_choisie)
             for secteur in secteurs_site:
                 config[annee][secteur] = ajout_config(
                     config[annee-1][secteur], combi_choisie)
 
-pkl.dump(config, open("config_echelonee","wb"))
+            ajouts[annee][site] = combi_choisie
+
+
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
+
 
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
@@ -345,3 +361,4 @@ print(len(etats_secteurs))
 print(len(secteurs_satures_def[2029]))
 print(prix_par_annee)
 print(prix_total)
+print(ajouts)

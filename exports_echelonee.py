@@ -7,11 +7,10 @@ dic_rho = pkl.load(open("dic_rho.p", "rb"))
 rho = pkl.load(open("rho.p", "rb"))
 etats = pkl.load(open("etats.p", "rb"))
 previsions = pkl.load(open("previsions.p", "rb"))
-config=pkl.load(open("config_echelonee",'rb'))
+config = pkl.load(open("config_echelonee", 'rb'))
 
 
-
-# print(config.keys())
+print(config)
 
 for annee in [2023, 2024, 2025, 2026, 2027]:
     count = 0
@@ -40,7 +39,7 @@ for annee in [2023, 2024, 2025, 2026, 2027]:
                         etat[indexation] = "5G"
                     elif frequence == freq_reduite + " update":
                         etat[indexation] = "5G"
-                    else :
+                    else:
                         etat[indexation] = "5G"
                 else:
                     etat.append(0)
