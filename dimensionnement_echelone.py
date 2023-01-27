@@ -11,6 +11,15 @@ sites = set()  # set des sites
 for secteur in etats_secteurs:
     sites.add(secteur[0:6])
 
+ajouts = {
+    2023: {},
+    2024: {},
+    2025: {},
+    2026: {},
+    2027: {},
+    2028: {}
+}
+
 config = {
     2022: {},
     2023: {},
@@ -24,8 +33,10 @@ config = {
 annees = [2023, 2024, 2025, 2026, 2027, 2028]
 # dico {<année>:set(<secteurs saturés>)} secteurs saturés si on ne changeait pas la config
 secteurs_satures_prevus = {annee: [] for annee in annees}
+secteurs_satures_prevus[2029] = []
 # dico similaire des secteurs maxés mais saturés pourtant
 secteurs_satures_def = {annee: [] for annee in annees}
+secteurs_satures_def[2029] = []
 
 ratio_4g = {  # ratio debit 4G / debit total en début de chaque année
     2023: 0.786,
@@ -33,7 +44,8 @@ ratio_4g = {  # ratio debit 4G / debit total en début de chaque année
     2025: 0.439,
     2026: 0.281,
     2027: 0.172,
-    2028: 0.12
+    2028: 0.12,
+    2029: 0.07
 }
 
 
@@ -47,7 +59,8 @@ previsions = {
     2025: {},
     2026: {},
     2027: {},
-    2028: {}
+    2028: {},
+    2029: {}
 }  # dictionnaire {<année>:{<secteur>:<prediction de débit sur le secteur au début de l’année>}}
 
 for secteur in coeffs_secteurs.keys():
@@ -62,6 +75,7 @@ for secteur in coeffs_secteurs.keys():
 
     for annee in annees:
         previsions[annee][secteur] = prediction(f"{annee}-01-01")
+    previsions[2029][secteur] = prediction("2029-01-01")
 
 
 # print(previsions)
@@ -188,6 +202,8 @@ assert (config_to_capacite_4g(config_test) == 35)
 
 # renvoie True si une config est valide pour un débit et débit 4G donnés
 def config_valide(config, debit, ratio_4g):
+    if config_to_capacite(config) == 0 or config_to_capacite_4g(config) == 0:
+        return False
     rho = debit/config_to_capacite(config)
     rho_4g = debit*ratio_4g/config_to_capacite_4g(config)
     return rho <= rho_max and rho_4g <= rho_max
@@ -203,11 +219,11 @@ def dispo_bandes(config_secteur):
             bandes_dispos.append(f"{freq} update")
         # la fréquence n’est pas dispo sur ce secteur
         elif not config_secteur[f"{freq} 5G"]:
-            bandes_dispos[secteur].append(freq+" 4G")
-            bandes_dispos[secteur].append(freq+" 5G")
+            bandes_dispos.append(freq+" 4G")
+            bandes_dispos.append(freq+" 5G")
     # cette fréquence est uniquement en 5G
-    if not etats_secteurs[secteur]["3500 MHz"]:
-        bandes_dispos[secteur].append("3500 MHz")
+    if not config_secteur["3500 MHz"]:
+        bandes_dispos.append("3500 MHz")
 
     return bandes_dispos
 
@@ -364,13 +380,21 @@ def ajout_config(config_secteur, combi):
         if "update" not in freq_option:
             config_secteur[freq_option] = True
         else:
-            pos_z = freq.index("z")
+            pos_z = freq_option.index("z")
             freq = freq_option[0:pos_z + 1]
             config_secteur[f"{freq} 5G"] = True
             config_secteur[f"{freq} 4G"] = False
+    return config_secteur
 
 
-prix_par_annee = {}
+prix_par_annee = {
+    2023: 0,
+    2024: 0,
+    2025: 0,
+    2026: 0,
+    2027: 0,
+    2028: 0
+}
 
 for annee in annees:  # à chaque année on regarde les previsions
     ### détection des secteurs saturés ###
@@ -384,29 +408,39 @@ for annee in annees:  # à chaque année on regarde les previsions
     ### calcul de toutes les combinaisons possibles ###
 
     for site in sites:
-        secteurs_site = [f"{site}A", f"{site}B", f"{site}C"]
+        secteurs_site = [f"{site}A", f"{site}B"]
+        if f"{site}C" in etats_secteurs:
+            secteurs_site.append(f"{site}C")
+
         if f"{site}A" in secteurs_satures_prevus[annee+1] or f"{site}B" in secteurs_satures_prevus[annee+1] or f"{site}C" in secteurs_satures_prevus[annee+1]:
             debit_futur = max([previsions[annee+1][secteur]
                               for secteur in secteurs_site])
             debit_actuel = max([previsions[annee][secteur]
                                for secteur in secteurs_site])
 
-        bandes_dispo = dispo_bandes(config[annee-1][secteurs_site[0]])
-        combis_possibles = all_combis(bandes_dispo)
-        combis_valides = []
+            bandes_dispo = dispo_bandes(config[annee-1][secteurs_site[0]])
+            combis_possibles = all_combis(bandes_dispo)
+            combis_valides = []
 
-        ### détermination des combinaisons valables ###
+            ### détermination des combinaisons valables ###
 
-        for combi in combis_possibles:
-            next_config = ajout_config(
-                config[annee-1][secteurs_site[0]], combi)
-            if config_valide(next_config, debit_actuel, ratio_4g[annee]) and config_valide(next_config, debit_futur, ratio_4g[annee+1]):
-                combis_valides.append(combi)
+            for combi in combis_possibles:
+                next_config = ajout_config(
+                    config[annee-1][secteurs_site[0]], combi)
+                if config_valide(next_config, debit_actuel, ratio_4g[annee]) and config_valide(next_config, debit_futur, ratio_4g[annee+1]):
+                    combis_valides.append(combi)
 
-        combi_choisie = 0
-        if combis_valides == []:
-            secteurs_satures_def.append(
-                max(secteurs_site, key=lambda c: previsions[annee+1][c]))
+            if combis_valides == []:
+                secteurs_satures_def[annee+1].append(
+                    max(secteurs_site, key=lambda c: previsions[annee+1][c]))
+            else:
+                combi_choisie = min(
+                    combis_valides, key=lambda c: combi_prix(c))
+                prix_par_annee[annee] = prix_par_annee[annee] + \
+                    combi_prix(combi_choisie)
+                for secteur in secteurs_site:
+                    config[annee][secteur] = ajout_config(
+                        config[annee-1][secteur], combi_choisie)
 
     # print(combis_choisies)
     # print(combis_sites)
@@ -493,6 +527,7 @@ prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
 #### Tracé d'un histogramme des modifications ####
 
+'''
 plt.figure()
 names = list(largeurs.keys())
 # print(names)
@@ -502,3 +537,10 @@ for site in combis_sites:
         values[names.index(evol)] += 1
 plt.bar(names, values)
 plt.show()
+'''
+
+print(secteurs_satures_def)
+print(len(etats_secteurs))
+print(len(secteurs_satures_def[2029]))
+print(prix_par_annee)
+print(prix_total)
