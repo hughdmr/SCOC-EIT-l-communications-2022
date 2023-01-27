@@ -82,18 +82,18 @@ rho_max = 0.8  # choix arbitraire de charge max de la cellule
 
 
 dic_rho2 = {}  # dictionnaire <secteur>:<charge du secteur>
-pkl.dump(dic_rho2, open("dic_rho2.p", "wb"))
 
+# def rho_secteurs(previsions):
+#     for secteur in previsions.keys():
+#         dic_rho2[secteur] = {}
+#         for annee in annees:
+#             dic_rho2[secteur][annee] = previsions[secteur][annee] / \
+#                 (capacites_secteurs[secteur]/10**6)
 
-def rho_secteurs(previsions):
-    for secteur in previsions.keys():
-        dic_rho2[secteur] = {}
-        for annee in annees:
-            dic_rho2[secteur][annee] = previsions[secteur][annee] / \
-                (capacites_secteurs[secteur]/10**6)
+#     # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
 
-    # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
-
+# rho_secteurs(previsions)
+# pkl.dump(dic_rho2, open("dic_rho2.p", "wb"))
 
 # Recherche des évolutions possibles
 frequences = ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz"]
@@ -147,6 +147,7 @@ def config_to_capacite(config):  # renvoie la capacité harmonique associée à 
         if config[freq_option]:
             capacite += largeurs[freq_option]
     return capacite
+
 
 
 # renvoie la capacité harmonique en 4G associée à la config
@@ -333,9 +334,8 @@ for annee in annees:  # à chaque année on regarde les previsions
                 config[annee][secteur] = ajout_config(
                     config[annee-1][secteur], combi_choisie)
 
-
+pkl.dump(config, open("config_echelonee","wb"))
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
-
 
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 

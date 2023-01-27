@@ -13,7 +13,7 @@ previsions = pkl.load(open("previsions.p", "rb"))
 rho = pkl.load(open("rho.p", "rb"))
 
 # print(combis_a_installer)
-# print(annees_update)
+print(annees_update)
 # print(dic_rho)
 
 
@@ -102,7 +102,7 @@ ajout_4G = ['700 MHz 4G', "800 MHz 4G",
 ajout_5G = list(largeurs.keys())
 for i in range(len(ajout_4G)):
     ajout_5G.remove(ajout_4G[i])
-print(ajout_5G)
+# print(ajout_5G)
 # print(annee_et_ajout[2027])
 
 for annee in annees:

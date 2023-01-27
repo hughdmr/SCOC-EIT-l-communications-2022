@@ -313,12 +313,12 @@ prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
 # # Tracé année par année
 
-# plt.figure()
-# names = list(prix_par_annee.keys())
-# names.sort()
-# values = [prix_par_annee[annee] for annee in names]
-# plt.bar(names, values)
-# plt.show()
+plt.figure()
+names = list(prix_par_annee.keys())
+names.sort()
+values = [prix_par_annee[annee] for annee in names]
+plt.bar(names, values)
+plt.show()
 
 # On va visualiser l'évolution de la répartition des investissements en faisaint varier rho
 
