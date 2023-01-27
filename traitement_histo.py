@@ -158,7 +158,7 @@ def trace_secteur(secteur):
     plt.ylabel("Trafic total en Mbps")
     plt.show()
 
-# trace_secteur("T70736C")
+trace_secteur("T78273B")
 
 # Prédiction du traffic par secteur à une date yyyy-mm-dd
 
