@@ -185,6 +185,13 @@ def config_valide(config, debit, ratio_4g):
     return rho <= rho_max and rho_4g <= rho_max
 
 
+def invalide_4g(config, debit, ratio_4g):
+    if config_to_capacite_4g(config) == 0:
+        return True
+    rho_4g = debit*ratio_4g/config_to_capacite_4g(config)
+    return rho_4g > rho_max
+
+
 # Enumérer pour chaque secteur les antennes non encore présentes
 
 def dispo_bandes(config_secteur):
@@ -284,7 +291,7 @@ for annee in annees:  # à chaque année on regarde les previsions
 
     for secteur in config[annee-1]:
         configuration = config[annee-1][secteur]
-        if not (config_valide(config[annee-1][secteur], previsions[annee][secteur], ratio_4g[annee]) and config_valide(config[annee-1][secteur], previsions[annee+1][secteur], ratio_4g[annee])):
+        if not config_valide(config[annee-1][secteur], previsions[annee][secteur], ratio_4g[annee]):
             secteurs_satures_prevus[annee+1].append(secteur)
     config[annee] = config[annee-1]
 
@@ -298,8 +305,6 @@ for annee in annees:  # à chaque année on regarde les previsions
         if f"{site}A" in secteurs_satures_prevus[annee+1] or f"{site}B" in secteurs_satures_prevus[annee+1] or f"{site}C" in secteurs_satures_prevus[annee+1]:
             debit_futur = max([previsions[annee+1][secteur]
                               for secteur in secteurs_site])
-            debit_actuel = max([previsions[annee][secteur]
-                               for secteur in secteurs_site])
 
             bandes_dispo = dispo_bandes(config[annee-1][secteurs_site[0]])
             combis_possibles = all_combis(bandes_dispo)
@@ -310,20 +315,23 @@ for annee in annees:  # à chaque année on regarde les previsions
             for combi in combis_possibles:
                 next_config = ajout_config(
                     config[annee-1][secteurs_site[0]], combi)
-                if config_valide(next_config, debit_actuel, ratio_4g[annee]) and config_valide(next_config, debit_futur, ratio_4g[annee+1]):
+                if config_valide(next_config, debit_futur, ratio_4g[annee+1]):
                     combis_valides.append(combi)
 
             if combis_valides == []:
                 secteurs_satures_def[annee+1].append(
                     max(secteurs_site, key=lambda c: previsions[annee+1][c]))
+                if invalide_4g(config[annee-1][secteur]):
+                    for freq_option
             else:
                 combi_choisie = min(
                     combis_valides, key=lambda c: combi_prix(c))
                 prix_par_annee[annee] = prix_par_annee[annee] + \
                     combi_prix(combi_choisie)
-                for secteur in secteurs_site:
-                    config[annee][secteur] = ajout_config(
-                        config[annee-1][secteur], combi_choisie)
+
+            for secteur in secteurs_site:
+                config[annee][secteur] = ajout_config(
+                    config[annee-1][secteur], combi_choisie)
 
 
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
