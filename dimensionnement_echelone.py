@@ -69,15 +69,15 @@ for secteur in coeffs_secteurs.keys():
 rho_max = 0.8  # choix arbitraire de charge max de la cellule
 
 
-dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
-pkl.dump(dic_rho, open("dic_rho.p", "wb"))
+dic_rho2 = {}  # dictionnaire <secteur>:<charge du secteur>
+pkl.dump(dic_rho2, open("dic_rho2.p", "wb"))
 
 
 def rho_secteurs(previsions):
     for secteur in previsions.keys():
-        dic_rho[secteur] = {}
+        dic_rho2[secteur] = {}
         for annee in annees:
-            dic_rho[secteur][annee] = previsions[secteur][annee] / \
+            dic_rho2[secteur][annee] = previsions[secteur][annee] / \
                 (capacites_secteurs[secteur]/10**6)
 
     # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
@@ -88,13 +88,13 @@ def rho_secteurs(previsions):
 
 # Identification des secteurs devant évoluer, en quelle année et à quel point
 '''
-for secteur in dic_rho.keys():
+for secteur in dic_rho2.keys():
     for annee in annees:
         if secteur not in ajouts.keys():
-            if dic_rho[secteur][annee] > rho:
+            if dic_rho2[secteur][annee] > rho:
                 ajouts[secteur] = {
                     "annee": annee,
-                    "rho 2028": dic_rho[secteur][2028],
+                    "rho 2028": dic_rho2[secteur][2028],
                     "besoin de debit": previsions[secteur][2028]/rho - capacites_secteurs[secteur]/10**6,
                     "besoin de 4g": previsions[secteur][annee]*ratio_4g[annee]/rho - capacites_secteurs_4g[secteur]
                 }
@@ -133,8 +133,8 @@ for secteur in etats_secteurs:
     for freq in frequences:
         config[2022][secteur][f"{freq} 4G"] = etats_secteurs[secteur][freq]
     for freq_option in largeurs:
-        if (freq_option not in config[2022][secteur]) and ("update" not in freq_option):
-            config[2022] = False
+        if freq_option not in config[2022][secteur] and ("update" not in freq_option):
+            config[2022][secteur][freq_option] = False
 
 assert (config[2022]["T70730A"]) == {
     "700 MHz 4G": False,
@@ -182,7 +182,7 @@ config_test = {
     "3500 MHz": False
 }
 
-assert (config_to_capacite(config_test) == 50)
+assert (config_to_capacite(config_test) == 53)
 assert (config_to_capacite_4g(config_test) == 35)
 
 
@@ -377,7 +377,7 @@ for annee in annees:  # à chaque année on regarde les previsions
 
     for secteur in config[annee-1]:
         configuration = config[annee-1][secteur]
-        if not (config_valide(config, previsions[annee], ratio_4g[annee]) and config_valide(config, previsions[annee+1], ratio_4g[annee])):
+        if not (config_valide(config[annee-1][secteur], previsions[annee][secteur], ratio_4g[annee]) and config_valide(config[annee-1][secteur], previsions[annee+1][secteur], ratio_4g[annee])):
             secteurs_satures_prevus[annee+1].append(secteur)
     config[annee] = config[annee-1]
 
@@ -391,7 +391,7 @@ for annee in annees:  # à chaque année on regarde les previsions
             debit_actuel = max([previsions[annee][secteur]
                                for secteur in secteurs_site])
 
-        bandes_dispo = dispo_bandes(secteurs_site[0])
+        bandes_dispo = dispo_bandes(config[annee-1][secteurs_site[0]])
         combis_possibles = all_combis(bandes_dispo)
         combis_valides = []
 
