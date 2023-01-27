@@ -51,7 +51,7 @@ ratio_4g = {  # ratio debit 4G / debit total en début de chaque année
 
 x_debut = "2017-06-19"
 
-# Prévisions de 2024 à 2027
+# Prévisions de 2023 à 2029
 
 previsions = {
     2023: {},
@@ -78,8 +78,6 @@ for secteur in coeffs_secteurs.keys():
     previsions[2029][secteur] = prediction("2029-01-01")
 
 
-# print(previsions)
-
 rho_max = 0.8  # choix arbitraire de charge max de la cellule
 
 
@@ -97,30 +95,8 @@ def rho_secteurs(previsions):
     # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
 
 
-# identification des ajouts
-
-
-# Identification des secteurs devant évoluer, en quelle année et à quel point
-'''
-for secteur in dic_rho2.keys():
-    for annee in annees:
-        if secteur not in ajouts.keys():
-            if dic_rho2[secteur][annee] > rho:
-                ajouts[secteur] = {
-                    "annee": annee,
-                    "rho 2028": dic_rho2[secteur][2028],
-                    "besoin de debit": previsions[secteur][2028]/rho - capacites_secteurs[secteur]/10**6,
-                    "besoin de 4g": previsions[secteur][annee]*ratio_4g[annee]/rho - capacites_secteurs_4g[secteur]
-                }
-'''
-
-# print(ajouts)
-
 # Recherche des évolutions possibles
-
 frequences = ["700 MHz", "800 MHz", "1800 MHz", "2100 MHz", "2600 MHz"]
-# frequences_ext = ["700 MHz", "800 MHz",
-#                  "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"]
 
 largeurs = {
     "700 MHz 4G": 5,
@@ -227,8 +203,6 @@ def dispo_bandes(config_secteur):
 
     return bandes_dispos
 
-# print(bandes_dispos)
-
 # Enumérer les combinaisons, sans discrimination sur le débit apporté
 
 
@@ -255,12 +229,6 @@ def all_combis(candidates):
             combis_correctes.append(combi)
     return combis_correctes
 
-# print(all_combis(list(largeurs.keys())))
-
-# Pour une combinaison, vérifier qu'elle fonctionne pour augmenter le débit
-
-
-# Pour une combinaison donnée, calculer le coût d'installation
 
 freq_prix = {
     "700 MHz 4G": 7000,
@@ -288,93 +256,8 @@ def combi_prix(combi):
         prix += freq_prix[evolution]
     return prix
 
-# Application aux secteurs
-
-
-'''
-for secteur in bandes_dispos.keys():
-    combis_choisies[secteur] = {}
-    candidates = bandes_dispos[secteur]
-    combis_possibles = all_combis(candidates)
-    debit = ajouts[secteur]["besoin de debit"]
-
-    combis_valables = []
-    for combi in combis_possibles:
-        if combi != []:
-            if combi_valable(combi, debit):
-                combis_valables.append(combi)
-    if combis_valables == []:
-        combis_choisies[secteur]["choix"] = "Aucune combinaison ne convient"
-    else:
-        choix = min(combis_valables, key=lambda c: combi_prix(c))
-        combis_choisies[secteur]["choix"] = choix
-        length = 0
-        for freq in combi:
-            length += largeurs[freq]/10**6
-        combis_choisies[secteur]["bande ajoutee"] = length
-        
-'''
-
-# print(combis_choisies)
-
-# Egaliser les configs sur chaque secteur d'un site
-
-'''
-combis_sites = {}  # donne les fréquences à ajouter sur chaque site
-
-for secteur in combis_choisies.keys():
-    site = secteur[0:6]
-    if not site in combis_sites:
-        combis_sites[site] = {}
-    if combis_choisies[secteur]["choix"] == "Aucune combinaison ne convient":
-        if not "limitant" in combis_sites[site]:
-            combis_sites[site]["limitant"] = [secteur]
-        else:
-            combis_sites[site]["limitant"].append(secteur)
-
-    elif not "config" in combis_sites[site]:
-        combis_sites[site
-                     ]["config"] = combis_choisies[secteur]["choix"]
-    else:
-        length = 0
-        for freq in combis_sites[site]["config"]:
-            length += largeurs[freq]
-        if combis_choisies[secteur]["bande ajoutee"] >= length:
-            combis_sites[site
-                         ]["config"] = combis_choisies[secteur]["choix"]
-
-'''
-
-# print(combis_sites)
-
-# les sites avec juste le champ "limitant" rempli sont les sites qui seront saturés quelle que soit la config
-
-'''
-
-for site in combis_sites.keys():
-    if not "config" in combis_sites[site]:
-        (choix, largeur) = (None, 0)
-        for lim in combis_sites[site]["limitant"]:
-            combinaison = bandes_dispos[lim]
-            length = 0
-            for freq in combinaison:
-                length += largeurs[freq]/10**6
-            if length > largeur:
-                largeur = length
-                choix = combinaison
-        combis_sites[site]["config"] = choix
-
-    combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
-
-combis_a_installer = {}
-for secteur in combis_choisies.keys():
-    combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
-    
-'''
 
 # fonction qui renvoie la config modifiée par des ajouts de nouvelles fréquences ou bien des màj 4G-->5G
-
-
 def ajout_config(config_secteur, combi):
     for freq_option in combi:
         if "update" not in freq_option:
@@ -442,102 +325,12 @@ for annee in annees:  # à chaque année on regarde les previsions
                     config[annee][secteur] = ajout_config(
                         config[annee-1][secteur], combi_choisie)
 
-    # print(combis_choisies)
-    # print(combis_sites)
-    # print(combis_a_installer)
-
-    # Estimation des investissements à réaliser chaque année
-
 
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
 
 
-'''
-for site in combis_sites.keys():
-    if "config" in combis_sites[site]:
-        secteurs = []
-        if site+"A" in ajouts:
-            secteurs.append(site+"A")
-        if site+"B" in ajouts:
-            secteurs.append(site+"B")
-        if site+"C" in ajouts:
-            secteurs.append(site+"C")
-        annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
-        if str(annee) not in prix_par_annee:
-            prix_par_annee[str(annee)] = combis_sites[site]["prix"]
-        else:
-            prix_par_annee[str(annee)] += combis_sites[site]["prix"]
-    if "limitant" in combis_sites[site]:
-        besoin_de_site += combis_sites[site]["limitant"]
-'''
-
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
-# print(prix_total)
-# print(combis_sites)
-# print(besoin_de_site)
-
-# # Tracé année par année
-
-# plt.figure()
-# names = list(prix_par_annee.keys())
-# names.sort()
-# values = [prix_par_annee[annee] for annee in names]
-# plt.bar(names, values)
-# plt.show()
-
-# On va visualiser l'évolution de la répartition des investissements en faisaint varier rho
-
-# Export des données
-# pkl.dump(prix_par_annee, open("rho_0_95.p", "wb"))
-
-# Rechargement des données de tous les rho
-
-# rho_0_7 = pkl.load(open("rho_0_7.p", "rb"))
-# rho_0_8 = pkl.load(open("rho_0_8.p", "rb"))
-# rho_0_9 = pkl.load(open("rho_0_9.p", "rb"))
-# rho_0_95 = pkl.load(open("rho_0_95.p", "rb"))
-# names = ["2023", "2024", "2025", "2026", "2027"]
-
-# figure = plt.figure(figsize=(10, 6))
-
-# plt.gcf().subplots_adjust(wspace=0.4, hspace=0.4)
-
-# axes = figure.add_subplot(2, 2, 1)
-# values_1 = [rho_0_7[annee] for annee in names]
-# axes.bar(names, values_1)
-# axes.set_title("Rho = 0,7")
-
-# axes = figure.add_subplot(2, 2, 2)
-# values_2 = [rho_0_8[annee] for annee in names]
-# axes.bar(names, values_2)
-# axes.set_title("Rho = 0,8")
-
-# axes = figure.add_subplot(2, 2, 3)
-# values_3 = [rho_0_9[annee] for annee in names]
-# axes.bar(names, values_3)
-# axes.set_title("Rho = 0,9")
-
-# axes = figure.add_subplot(2, 2, 4)
-# values_4 = [rho_0_95[annee] for annee in names]
-# axes.bar(names, values_4)
-# axes.set_title("Rho = 0,95")
-
-# plt.show()
-
-#### Tracé d'un histogramme des modifications ####
-
-'''
-plt.figure()
-names = list(largeurs.keys())
-# print(names)
-values = [0]*len(names)
-for site in combis_sites:
-    for evol in combis_sites[site]["config"]:
-        values[names.index(evol)] += 1
-plt.bar(names, values)
-plt.show()
-'''
 
 print(secteurs_satures_def)
 print(len(etats_secteurs))
