@@ -6,14 +6,6 @@ coeffs_secteurs = pkl.load(open("coeffs.p", "rb"))
 capacites_secteurs = pkl.load(open("capacites.p", "rb"))
 # réportorie les fréquences dispo sur les différents secteurs
 etats_secteurs = pkl.load(open("etats.p", "rb"))
-ratio_4g = {
-    2023: 0.786,
-    2024: 0.6,
-    2025: 0.439,
-    2026: 0.281,
-    2027: 0.172,
-    2028: 0.12
-}
 
 x_debut = "2017-06-19"
 
@@ -36,8 +28,7 @@ for secteur in coeffs_secteurs.keys():
         2024: prediction("2024-01-01"),
         2025: prediction("2025-01-01"),
         2026: prediction("2026-01-01"),
-        2027: prediction("2027-01-01"),
-        2028: prediction("2028-01-01")
+        2027: prediction("2027-01-01")
     }
 
 pkl.dump(previsions, open("previsions.p", "wb"))
@@ -49,19 +40,15 @@ rho = 0.8  # choix arbitraire de charge max de la cellule
 pkl.dump(rho, open("rho.p", "wb"))
 
 dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
-annees = [2023, 2024, 2025, 2026, 2027, 2028]
+annees = [2023, 2024, 2025, 2026, 2027]
 
+for secteur in previsions.keys():
+    dic_rho[secteur] = {}
+    for annee in annees:
+        dic_rho[secteur][annee] = previsions[secteur][annee] / \
+            (capacites_secteurs[secteur]/10**6)
 
-def rho_secteurs(previsions):
-    for secteur in previsions.keys():
-        dic_rho[secteur] = {}
-        for annee in annees:
-            dic_rho[secteur][annee] = previsions[secteur][annee] / \
-                (capacites_secteurs[secteur]/10**6)
-
-    # liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
-
-
+# liste des (<secteur de charge supérieure à rho>, <charge du secteur>)
 sup = []
 for secteur in dic_rho.keys():
     if dic_rho[secteur][2023] >= rho:
@@ -85,8 +72,8 @@ for secteur in dic_rho.keys():
             if dic_rho[secteur][annee] > rho:
                 ajouts[secteur] = {
                     "annee": annee,
-                    "rho 2028": dic_rho[secteur][2028],
-                    "besoin de debit": previsions[secteur][2028]/rho - capacites_secteurs[secteur]/10**6
+                    "rho 2027": dic_rho[secteur][2027],
+                    "besoin de debit": previsions[secteur][2027]/rho - capacites_secteurs[secteur]/10**6
                 }
 
 pkl.dump(ajouts, open("ajouts.p", "wb"))
