@@ -258,3 +258,11 @@ for annee in annees:
         values[indexs] = rhos[secteurs[j]]
     df5.insert(7, "rho_avec_chg", values)
     df5.to_csv("exports/export_" + str(annee)+".csv",)
+
+sect_tj_sat = []
+df6 = pd.read_csv("exports/export_2027.csv")
+for i in range(len(df6['rho_avec_chg'])):
+    if df6['rho_avec_chg'][i] > rho:
+        sect_tj_sat.append(df6['secteur'][i])
+
+print(sect_tj_sat)
