@@ -15,7 +15,6 @@ ratio_4g = {
     2028: 0.12
 }
 
-
 x_debut = "2017-06-19"
 
 # Prévisions de 2024 à 2027
@@ -41,9 +40,13 @@ for secteur in coeffs_secteurs.keys():
         2028: prediction("2028-01-01")
     }
 
-# print(previsions)
+pkl.dump(previsions, open("previsions.p", "wb"))
 
-rho = 1  # choix arbitraire de charge max de la cellule
+print(previsions)
+
+rho = 0.8  # choix arbitraire de charge max de la cellule
+
+pkl.dump(rho, open("rho.p", "wb"))
 
 dic_rho = {}  # dictionnaire <secteur>:<charge du secteur>
 annees = [2023, 2024, 2025, 2026, 2027, 2028]
@@ -71,7 +74,7 @@ pkl.dump(dic_rho, open("dic_rho.p", "wb"))
 
 # identification des ajouts
 
-ajouts = {}  # dictionnair contenant les secteurs surchargés
+ajouts = {}  # dictionnaire contenant les secteurs surchargés
 # dictionnaire <secteur de charge sup à rho>:(dictionnaire {"annee","rho 2027","besoin de debit"})
 
 # Identification des secteurs devant évoluer, en quelle année et à quel point
@@ -86,6 +89,7 @@ for secteur in dic_rho.keys():
                     "besoin de debit": previsions[secteur][2028]/rho - capacites_secteurs[secteur]/10**6
                 }
 
+pkl.dump(ajouts, open("ajouts.p", "wb"))
 # print(ajouts)
 
 # Recherche des évolutions possibles
@@ -128,7 +132,7 @@ for secteur in ajouts.keys():
     if not etats_secteurs[secteur]["3500 MHz"]:
         bandes_dispos[secteur].append("3500 MHz")
 
-# print(bandes_dispos)
+# print(bandes_dispos["T70747C"]) # on obtient le résultat attendu
 
 # Enumérer les combinaisons, sans discrimination sur le débit apporté
 
@@ -156,6 +160,7 @@ def all_combis(candidates):
             combis_correctes.append(combi)
     return combis_correctes
 
+# print(all_combis(bandes_dispos["T70747C"])) # renvoie le résultat attendu
 # print(all_combis(list(largeurs.keys())))
 
 # Pour une combinaison, vérifier qu'elle fonctionne pour augmenter le débit
@@ -222,6 +227,7 @@ for secteur in bandes_dispos.keys():
             length += largeurs[freq]/10**6
         combis_choisies[secteur]["bande ajoutee"] = length
 
+# print(combis_choisies["T70747C"]) # renvoie le résultat attendu
 # print(combis_choisies)
 
 # Egaliser les configs sur chaque secteur d'un site
@@ -250,6 +256,7 @@ for secteur in combis_choisies.keys():
                          ]["config"] = combis_choisies[secteur]["choix"]
 
 # print(combis_sites)
+# print(combis_sites["T70747"]) # renvoie le résultat attendu
 
 # les sites avec juste le champ "limitant" rempli sont les sites qui seront saturés quelle que soit la config
 
@@ -264,13 +271,22 @@ for site in combis_sites.keys():
             if length > largeur:
                 largeur = length
                 choix = combinaison
-    combis_sites[site]["config"] = choix
+        combis_sites[site]["config"] = choix
 
     combis_sites[site]["prix"] = combi_prix(combis_sites[site]["config"])
 
+# print(combis_sites["T70747"])
+
 combis_a_installer = {}
-for secteur in combis_choisies.keys():
-    combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
+for secteur in coeffs_secteurs.keys():
+    if secteur[0:6] in combis_sites:
+        combis_a_installer[secteur] = combis_sites[secteur[0:6]]["config"]
+
+pkl.dump(combis_a_installer, open("combis_a_installer.p", "wb"))
+
+for annee in [2023, 2024, 2025, 2026, 2027]:
+    for secteur in bandes_dispos:
+        présentes = bandes_dispos[secteur]
 
 # print(combis_choisies)
 # print(combis_sites)
@@ -280,6 +296,8 @@ for secteur in combis_choisies.keys():
 
 prix_par_annee = {}
 besoin_de_site = []  # liste les secteurs saturés même en étant améliorés
+
+annee_update_site = {}
 
 for site in combis_sites.keys():
     if "config" in combis_sites[site]:
@@ -291,6 +309,7 @@ for site in combis_sites.keys():
         if site+"C" in ajouts:
             secteurs.append(site+"C")
         annee = min([ajouts[secteur]["annee"] for secteur in secteurs])
+        annee_update_site[site] = annee
         if str(annee) not in prix_par_annee:
             prix_par_annee[str(annee)] = combis_sites[site]["prix"]
         else:
@@ -298,6 +317,7 @@ for site in combis_sites.keys():
     if "limitant" in combis_sites[site]:
         besoin_de_site += combis_sites[site]["limitant"]
 
+pkl.dump(annee_update_site, open("annees_update.p", "wb"))
 prix_total = sum([prix_par_annee[annee] for annee in prix_par_annee])
 
 # print(prix_total)
@@ -360,7 +380,6 @@ names = list(largeurs.keys())
 values = [0]*len(names)
 for site in combis_sites:
     for evol in combis_sites[site]["config"]:
-        values[names.index(evol)]+=1
+        values[names.index(evol)] += 1
 plt.bar(names, values)
 plt.show()
-
